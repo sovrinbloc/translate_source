@@ -34,13 +34,26 @@ const (
 )
 
 func (j *SourceRegex) HanFind(source string) map[string]string {
+	hanWords := make(map[string]string)
 	allHan := j.FindAll([]byte(source), -1)
-	hanMap := make(map[string]string)
 	for _, han := range allHan {
-		hanMap[string(han)] = ""
+		hanWords[string(han)] = ""
+		j.words[string(han)] = ""
 	}
-	j.words = hanMap
-	return j.words
+
+	//lengths := make(map[int][]string)
+	//keys := []int{}
+	//for word, _ := range hanWords {
+	//	keys = append(keys, len([]rune(word))) // all the lengths of each word. thats it.
+	//	lengths[len([]rune(word))] = append(lengths[len([]rune(word))], word) //
+	//}
+	//sort.Ints(keys)
+	//results := make(map[string]string)
+	//for index, value := range keys {
+	//	results[keys[index]] = ""
+	//}
+
+	return hanWords
 }
 
 func (j *SourceRegex) HanCreateRegexs() map[string]*RegexPool {
@@ -51,6 +64,8 @@ func (j *SourceRegex) HanCreateRegexs() map[string]*RegexPool {
 				val.count++
 			}
 			j.Regexs[string(han)] = &RegexPool{Regexp: k, count: 0}
+		} else {
+			panic("Error establishing something")
 		}
 	}
 	return j.Regexs
