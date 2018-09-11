@@ -20,16 +20,16 @@ type LocationListInterface interface {
 
 type LocationScan struct {
 	Files           map[string]string
-	directories     map[string]bool
+	Directories     map[string]bool
 	ignore          map[string]struct{}
 	isWhitelistOnly bool
 	whitelist       map[string]struct{}
 }
 
-func NewLocationScan(location ...string) LocationListInterface {
+func NewLocationScan(location ...string) *LocationScan {
 	l := LocationScan{
 		Files:       make(map[string]string),
-		directories: make(map[string]bool),
+		Directories: make(map[string]bool),
 		ignore:      make(map[string]struct{}),
 	}
 	l.InitIgnore()
@@ -51,7 +51,7 @@ func (l *LocationScan) AddDirectory(filepath string) (map[string]string, error) 
 			if l.IsIgnoredFile(f.Name()) {
 				tmp = filepath + "/" + f.Name()
 				if _, ok := l.Files[tmp]; ok != true {
-					l.directories[filepath+"/"+f.Name()] = false
+					l.Directories[filepath+"/"+f.Name()] = false
 					l.AddDirectory(tmp)
 				}
 			}
@@ -61,6 +61,7 @@ func (l *LocationScan) AddDirectory(filepath string) (map[string]string, error) 
 			}
 		}
 	}
+	l.GetSources()
 	return l.Files, nil
 }
 
@@ -156,7 +157,7 @@ func (l *LocationScan) GetFileList() []string {
 }
 func (l *LocationScan) GetDirectoryList() []string {
 	j := make([]string, 0)
-	for dir, _ := range l.directories {
+	for dir, _ := range l.Directories {
 		j = append(j, dir)
 	}
 	return j

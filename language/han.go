@@ -9,29 +9,35 @@ import (
 )
 
 type TranslateSource struct {
-	SourceFiles    directory.LocationScan
-	RegexTranslate source.SourceRegex
+	SourceFiles    *directory.LocationScan
+	RegexTranslate *source.SourceRegex
+	TotalSource map[string]map[string]string
 	*translate.Translator
+
 }
 
 func (t *TranslateSource) TranslateSource(string) string {
 	panic("implement me")
 }
 
-func (t *TranslateSource) GetForeignStrings() map[string]map[string]string {
+func (t *TranslateSource) GetForeignStrings() (map[string]map[string]string, map[string]*source.RegexPool) {
 	dat := directory.NewLocationScan()
 	dat.AddIgnoreFile("en_US", ".sql", ".key", "simplemde.js")
-	dat.AddWhitelistFile(".go", ".vue")
+	dat.AddWhitelistFile(".go")
 	dat.AddDirectory(source.DIR_BASE)
-	s := dat.GetSources()
+
 	h := source.NewHanRegex()
 
 	totalSource := make(map[string]map[string]string)
-	for index, file := range s {
-		totalSource[index] = h.HanFind(file)
+	for index, file := range dat.Files {
+		totalSource[index] = h.HanFind(file) // map of Han => English
 	}
 
-	return totalSource
+	regexs := h.HanCreateRegexs()
+
+	t.SourceFiles = dat
+	t.TotalSource = totalSource
+	return totalSource, regexs
 }
 
 type Translate interface {
