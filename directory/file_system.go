@@ -5,6 +5,7 @@ import (
 	"strings"
 	"fmt"
 	"io/ioutil"
+	"translate_source/config"
 )
 
 type FileDirectory struct {
@@ -15,8 +16,8 @@ type FileDirectory struct {
 
 func NewFileStructure(directory string) *FileDirectory {
 	l := NewLocationScan(true)
-	l.AddIgnoreFile("en_US", ".sql", ".key", "simplemde.js")
-	l.AddWhitelistFile(".go")
+	l.AddIgnoreFile(config.Env.Ignore...)
+	l.AddWhitelistFile(config.Env.Whitelist...)
 	l.AddDirectory(directory)
 
 	return &FileDirectory{
@@ -29,7 +30,7 @@ func NewFileStructure(directory string) *FileDirectory {
 func (f *FileDirectory) SaveDirectory(directory string) {
 	err := os.MkdirAll(directory, os.ModePerm)
 	if err != nil {
-		panic(err)
+		fmt.Println(err)
 	}
 }
 
@@ -54,20 +55,26 @@ func (f *FileDirectory) ClipBasePath() {
 func (f *FileDirectory) AddFiles(m map[string]string) {
 	f.Source = m
 	f.ClipBasePath()
-	fmt.Println("added files", m)
+	fmt.Println("added files")
 }
 
 func (f *FileDirectory) CreateFolderStructure(prefix string) {
+	fmt.Println("Creating Directories")
+
 	for key, _ := range f.Directories {
 		f.SaveDirectory(prefix + key)
+		fmt.Println(">>>", prefix+key)
+
 	}
 }
 
 func (f *FileDirectory) SaveFiles(prefix string) {
 	var err error
-	for directory, source := range f.Source {
-		//f.SaveDirectory(prefix + directory)
-		err = ioutil.WriteFile(prefix + directory,  []byte(source), 0644)
+	fmt.Println("Writing Files")
+	for file, source := range f.Source {
+		//f.SaveDirectory(prefix + file)
+		fmt.Println(">>>", prefix+file)
+		err = ioutil.WriteFile(prefix +file,  []byte(source), 0644)
 		check(err)
 	}
 }

@@ -28,7 +28,7 @@ type WordsSource struct {
 func (t *TranslateSource) GetForeignStrings() (map[string][]string, map[string]*source.RegexPool) {
 	dat := directory.NewLocationScan(true)
 	dat.AddIgnoreFile("en_US", ".sql", ".key", "simplemde.js")
-	dat.AddWhitelistFile(".go")
+	dat.AddWhitelistFile(".vue")
 	dat.AddDirectory(source.DIR_BASE) // gets files and populates them with source as well
 	dat.GetSources()
 
@@ -52,18 +52,18 @@ type Translate interface {
 }
 
 func NewTranslate() *TranslateSource {
-	t := TranslateSource{Translator: translate.New(config.Env["YANDEX_KEY"])}
+	t := TranslateSource{Translator: translate.New(config.Env.Vars["YANDEX_KEY"])}
 	return &t
 }
 
 func (tr *TranslateSource) TranslateString(source string) string {
 
-	_, err := tr.GetLangs(config.Env["FROM"])
+	_, err := tr.GetLangs(config.Env.Vars["FROM"])
 	if err != nil {
 		fmt.Println(err)
 	}
 
-	translation, err := tr.Translate(config.Env["TO"], source)
+	translation, err := tr.Translate(config.Env.Vars["TO"], source)
 	if err != nil {
 		fmt.Println(err)
 	} else {
