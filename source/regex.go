@@ -3,6 +3,7 @@ package source
 import (
 	"fmt"
 	"regexp"
+	"sort"
 )
 
 type SourceRegex struct {
@@ -33,7 +34,7 @@ const (
 	LOC_MAIN           = "main.go"
 )
 
-func (j *SourceRegex) HanFind(source string) map[string]string {
+func (j *SourceRegex) HanFind(source string) []string {
 	hanWords := make(map[string]string)
 	allHan := j.FindAll([]byte(source), -1)
 	for _, han := range allHan {
@@ -41,19 +42,27 @@ func (j *SourceRegex) HanFind(source string) map[string]string {
 		j.words[string(han)] = ""
 	}
 
-	//lengths := make(map[int][]string)
-	//keys := []int{}
-	//for word, _ := range hanWords {
-	//	keys = append(keys, len([]rune(word))) // all the lengths of each word. thats it.
-	//	lengths[len([]rune(word))] = append(lengths[len([]rune(word))], word) //
-	//}
-	//sort.Ints(keys)
-	//results := make(map[string]string)
-	//for index, value := range keys {
-	//	results[keys[index]] = ""
-	//}
+	lengths := make(map[int][]string) // each index is a slice of strings. if there are 2 of the same length, they both will be in lengths[2]{a,b}
+	keys := []int{} // holds the length of the word
+	for word, _ := range hanWords {
+		keys = append(keys, len([]rune(word))) // all the lengths of each word. thats it.
+		lengths[len([]rune(word))] = append(lengths[len([]rune(word))], word)
+	}
+	sort.Ints(keys)
 
-	return hanWords
+	for i, j := 0, len(keys)-1; i < j; i, j = i+1, j-1 {
+		keys[i], keys[j] = keys[j], keys[i]
+	}
+
+	words := []string{}
+
+	//this is in order
+	for _, value := range keys {
+		for _, word := range lengths[value] {
+			words = append(words, word)
+		}
+	}
+	return words
 }
 
 func (j *SourceRegex) HanCreateRegexs() map[string]*RegexPool {

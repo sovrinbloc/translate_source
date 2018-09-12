@@ -24,18 +24,17 @@ type LocationScan struct {
 	ignore          map[string]struct{}
 	isWhitelistOnly bool
 	whitelist       map[string]struct{}
+	IsFullPath bool
 }
 
-func NewLocationScan(location ...string) *LocationScan {
+func NewLocationScan(isFullPath bool) *LocationScan {
 	l := LocationScan{
 		Files:       make(map[string]string),
 		Directories: make(map[string]bool),
 		ignore:      make(map[string]struct{}),
+		IsFullPath:  isFullPath,
 	}
 	l.InitIgnore()
-	for _, loc := range location {
-		l.AddDirectory(loc)
-	}
 	return &l
 }
 
@@ -51,17 +50,24 @@ func (l *LocationScan) AddDirectory(filepath string) (map[string]string, error) 
 			if l.IsIgnoredFile(f.Name()) {
 				tmp = filepath + "/" + f.Name()
 				if _, ok := l.Files[tmp]; ok != true {
-					l.Directories[filepath+"/"+f.Name()] = false
+					if l.IsFullPath {
+						l.Directories[filepath+"/"+f.Name()] = false
+					} else {
+						l.Directories[f.Name()] = false
+					}
 					l.AddDirectory(tmp)
 				}
 			}
 		} else {
 			if l.CheckValidFile(f.Name()) {
-				l.Files[filepath+"/"+f.Name()] = ""
+				if l.IsFullPath {
+					l.Files[filepath+"/"+f.Name()] = ""
+				} else {
+					l.Files[f.Name()] = ""
+				}
 			}
 		}
 	}
-	l.GetSources()
 	return l.Files, nil
 }
 
