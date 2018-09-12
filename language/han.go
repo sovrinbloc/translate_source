@@ -11,7 +11,7 @@ import (
 type TranslateSource struct {
 	SourceFiles    *directory.LocationScan
 	RegexTranslate *source.SourceRegex
-	TotalSource map[string]map[string]string
+	TotalSource map[string][]string
 	*translate.Translator
 
 }
@@ -20,15 +20,21 @@ func (t *TranslateSource) TranslateSource(string) string {
 	panic("implement me")
 }
 
-func (t *TranslateSource) GetForeignStrings() (map[string]map[string]string, map[string]*source.RegexPool) {
-	dat := directory.NewLocationScan()
+type WordsSource struct {
+	Words []string
+	Source string
+}
+
+func (t *TranslateSource) GetForeignStrings() (map[string][]string, map[string]*source.RegexPool) {
+	dat := directory.NewLocationScan(true)
 	dat.AddIgnoreFile("en_US", ".sql", ".key", "simplemde.js")
 	dat.AddWhitelistFile(".go")
-	dat.AddDirectory(source.DIR_BASE)
+	dat.AddDirectory(source.DIR_BASE) // gets files and populates them with source as well
+	dat.GetSources()
 
 	h := source.NewHanRegex()
 
-	totalSource := make(map[string]map[string]string)
+	totalSource := make(map[string][]string)
 	for index, file := range dat.Files {
 		totalSource[index] = h.HanFind(file) // map of Han => English
 	}

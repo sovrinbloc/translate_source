@@ -34,7 +34,7 @@ const (
 	LOC_MAIN           = "main.go"
 )
 
-func (j *SourceRegex) HanFind(source string) map[string]string {
+func (j *SourceRegex) HanFind(source string) []string {
 	hanWords := make(map[string]string)
 	allHan := j.FindAll([]byte(source), -1)
 	for _, han := range allHan {
@@ -50,18 +50,19 @@ func (j *SourceRegex) HanFind(source string) map[string]string {
 	}
 	sort.Ints(keys)
 
-
-	//this is in order
-	results := make(map[string]string)
-	for _, value := range keys {
-		for _, word := range lengths[value] {
-			results[word] = ""
-		}
+	for i, j := 0, len(keys)-1; i < j; i, j = i+1, j-1 {
+		keys[i], keys[j] = keys[j], keys[i]
 	}
 
-	//but still, maps do not come in order. so we must re-order them.
+	words := []string{}
 
-	return results
+	//this is in order
+	for _, value := range keys {
+		for _, word := range lengths[value] {
+			words = append(words, word)
+		}
+	}
+	return words
 }
 
 func (j *SourceRegex) HanCreateRegexs() map[string]*RegexPool {
