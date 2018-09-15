@@ -4,6 +4,7 @@ import (
 	"errors"
 	"io/ioutil"
 	"strings"
+	"translate_source/config"
 )
 
 type LocationListInterface interface {
@@ -24,7 +25,7 @@ type LocationScan struct {
 	ignore          map[string]struct{}
 	isWhitelistOnly bool
 	whitelist       map[string]struct{}
-	IsFullPath bool
+	IsFullPath      bool
 }
 
 func NewLocationScan(isFullPath bool) *LocationScan {
@@ -119,15 +120,20 @@ func (l *LocationScan) CheckValidFile(path string) bool {
 
 func (l *LocationScan) AddIgnoreFile(ignore ...string) {
 	for _, file := range ignore {
-		l.ignore[file] = struct{}{}
+		if len(config.RemoveSpaces(file)) > 0 {
+			l.ignore[file] = struct{}{}
+		}
 	}
 }
+
 func (l *LocationScan) AddWhitelistFile(ignore ...string) {
-	l.isWhitelistOnly = true
 	l.whitelist = make(map[string]struct{})
 
 	for _, file := range ignore {
-		l.whitelist[file] = struct{}{}
+		if len(config.RemoveSpaces(file)) > 0 {
+			l.isWhitelistOnly = true
+			l.whitelist[file] = struct{}{}
+		}
 	}
 }
 

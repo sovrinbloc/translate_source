@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/bas24/googletranslatefree"
 	"testing"
+	"reflect"
 )
 
 func TestRegexFind(t *testing.T) {
@@ -16,7 +17,19 @@ func TestRegexFind(t *testing.T) {
 	for _, single := range all {
 		translateWord(string(single))
 	}
+}
 
+func TestHanFinder(t *testing.T) {
+	r := NewHanRegex()
+	if got, expected := r.HanFind("Testing话题TSDF*#"), "话题"; got[0] != expected {
+		t.Errorf("incorrect return value, got %s, expected %s", got, expected)
+	}
+	if got, expected := reflect.TypeOf(r.HanFind("Testing话题TSDF*#")), reflect.TypeOf([]string{"话题"}); got != expected {
+		t.Errorf("incorrect return value, got %s, expected %s", got, expected)
+	}
+	if got, expected := len(r.HanFind("Testing话题TSDF*#话题sdsds")), int(2); got != expected {
+		t.Errorf("incorrect return value, got %s, expected %s", got, expected)
+	}
 }
 
 func translateWord(word string) {

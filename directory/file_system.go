@@ -1,10 +1,10 @@
 package directory
 
 import (
-	"os"
-	"strings"
 	"fmt"
 	"io/ioutil"
+	"os"
+	"strings"
 	"translate_source/config"
 )
 
@@ -16,8 +16,14 @@ type FileDirectory struct {
 
 func NewFileStructure(directory string) *FileDirectory {
 	l := NewLocationScan(true)
-	l.AddIgnoreFile(config.Env.Ignore...)
-	l.AddWhitelistFile(config.Env.Whitelist...)
+
+	if config.Env.Whitelist != nil {
+		l.AddIgnoreFile(config.Env.Ignore...)
+	}
+	if config.Env.Whitelist != nil {
+		l.AddWhitelistFile(config.Env.Whitelist...)
+	}
+
 	l.AddDirectory(directory)
 
 	return &FileDirectory{
@@ -59,7 +65,7 @@ func (f *FileDirectory) AddFiles(m map[string]string) {
 }
 
 func (f *FileDirectory) CreateFolderStructure(prefix string) {
-	fmt.Println("Creating Directories")
+	fmt.Println("creating directories")
 
 	for key, _ := range f.Directories {
 		f.SaveDirectory(prefix + key)
@@ -70,11 +76,11 @@ func (f *FileDirectory) CreateFolderStructure(prefix string) {
 
 func (f *FileDirectory) SaveFiles(prefix string) {
 	var err error
-	fmt.Println("Writing Files")
+	fmt.Println("writing files")
 	for file, source := range f.Source {
 		//f.SaveDirectory(prefix + file)
 		fmt.Println(">>>", prefix+file)
-		err = ioutil.WriteFile(prefix +file,  []byte(source), 0644)
+		err = ioutil.WriteFile(prefix+file, []byte(source), 0644)
 		check(err)
 	}
 }
