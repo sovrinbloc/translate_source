@@ -2,23 +2,22 @@ package language
 
 import (
 	"github.com/dafanasev/go-yandex-translate"
+	"log"
+	"regexp"
+	"strings"
 	"translate_source/config"
 	"translate_source/directory"
+	"translate_source/persist"
 	"translate_source/source"
-	"log"
-	"strings"
-	"regexp"
 )
+
+const YANDEX_MAX_LENGTH = 10000
 
 type TranslateSource struct {
 	SourceFiles    *directory.LocationScan
 	RegexTranslate *source.SourceRegex
 	TotalSource    map[string][]string
 	*translate.Translator
-}
-
-func (t *TranslateSource) TranslateSource(string) string {
-	panic("implement me")
 }
 
 type WordsSource struct {
@@ -67,7 +66,7 @@ func (tr *TranslateSource) TranslateString(source string) string {
 		log.Println(err)
 	}
 
-	if t, err := redisClient.Get(source).Result(); err == nil {
+	if t, err := persist.RedisClient.Get(source).Result(); err == nil {
 		log.Println("translated from cache")
 		return t
 	}
@@ -75,7 +74,7 @@ func (tr *TranslateSource) TranslateString(source string) string {
 	if err != nil {
 		log.Println(err)
 	} else {
-		err := redisClient.Set(source, translation.Result(), 0).Err()
+		err := persist.RedisClient.Set(source, translation.Result(), 0).Err()
 		if err != nil {
 			log.Printf("error caching %s as %s: %s", source, translation.Result(), err)
 		}
@@ -84,21 +83,20 @@ func (tr *TranslateSource) TranslateString(source string) string {
 	return ""
 }
 
-
 func (tr *TranslateSource) TranslateBulkString(source string) string {
 	_, err := tr.GetLangs(config.Env.Vars["FROM"])
 	if err != nil {
 		log.Println(err)
 	}
 
-	if t, err := redisClient.Get(source).Result(); err == nil {
+	if t, err := persist.RedisClient.Get(source).Result(); err == nil {
 		log.Println("translated from cache")
 		return t
 	}
 
 	sliceOfChineseWords := strings.Split(source, config.Env.Vars["DELIMITER"])
 	for _, word := range sliceOfChineseWords {
-		if e, err := redisClient.Get(word).Result(); err == nil {
+		if e, err := persist.RedisClient.Get(word).Result(); err == nil {
 			source = strings.Replace(source, word, e, -1)
 			log.Println("translated from cache")
 		}
@@ -109,7 +107,7 @@ func (tr *TranslateSource) TranslateBulkString(source string) string {
 		return source
 	}
 
-	if len(source) > 10000 {
+	if len(source) > YANDEX_MAX_LENGTH {
 		return source
 	}
 
@@ -117,15 +115,15 @@ func (tr *TranslateSource) TranslateBulkString(source string) string {
 	results := translation.Result()
 	sliceOfEnglishWords := strings.Split(results, config.Env.Vars["DELIMITER"])
 	for key, han := range sliceOfChineseWords {
-		if _, err := redisClient.Get(han).Result(); err != nil {
-			redisClient.Set(han, sliceOfEnglishWords[key], 0)
+		if _, err := persist.RedisClient.Get(han).Result(); err != nil {
+			persist.RedisClient.Set(han, sliceOfEnglishWords[key], 0)
 			log.Printf("set key for word %s: %s", han, sliceOfEnglishWords[key])
 		}
 	}
 	if err != nil {
 		log.Println(err)
 	} else {
-		err := redisClient.Set(source, translation.Result(), 0).Err()
+		err := persist.RedisClient.Set(source, translation.Result(), 0).Err()
 		if err != nil {
 			log.Printf("error caching %s as %s: %s", source, translation.Result(), err)
 		}
@@ -133,4 +131,3 @@ func (tr *TranslateSource) TranslateBulkString(source string) string {
 	}
 	return ""
 }
-

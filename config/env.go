@@ -19,7 +19,11 @@ var Env = struct {
 	make([]string, 0),
 }
 
-//var Env.Vars = make(map[string]string)
+const (
+	NEW_DIR   = "NEW_DIR"
+	DIRECTORY = "DIRECTORY"
+	DIR_BASE  = "DIR_BASE"
+)
 
 func EnvInit() {
 	err := godotenv.Load()
@@ -32,6 +36,12 @@ func EnvInit() {
 	Env.Vars["TO"] = os.Getenv("TO")
 	Env.Vars["DELIMITER"] = os.Getenv("DELIMITER")
 	Env.Vars["NEW_DIR"] = os.Getenv("NEW_DIR")
+	Env.Vars["ROACH_HOST"] = os.Getenv("ROACH_HOST")
+	Env.Vars["ROACH_PORT"] = os.Getenv("ROACH_PORT")
+	Env.Vars["ROACH_USER"] = os.Getenv("ROACH_USER")
+	Env.Vars["ROACH_DB"] = os.Getenv("ROACH_DB")
+	Env.Vars["REDIS_HOST"] = os.Getenv("REDIS_HOST")
+	Env.Vars["REDIS_PORT"] = os.Getenv("REDIS_PORT")
 
 	Env.Whitelist = nil
 	if whitelist := strings.Split(RemoveSpaces(os.Getenv("WHITELIST")), ","); len(whitelist) > 0 {

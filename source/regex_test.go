@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/bas24/googletranslatefree"
-	"testing"
 	"reflect"
+	"testing"
 )
 
 func TestRegexFind(t *testing.T) {
