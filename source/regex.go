@@ -1,7 +1,6 @@
 package source
 
 import (
-	"fmt"
 	"regexp"
 	"translate_source/conversions"
 )
@@ -17,15 +16,6 @@ type RegexPool struct {
 	translation string
 	*regexp.Regexp
 	count int
-}
-
-type TranslateSource interface {
-	TranslateSource(string) string
-	GetStrings() string
-}
-
-func (s *SourceRegex) TranslateSource(filename string) {
-
 }
 
 const (
@@ -46,8 +36,6 @@ func (j *SourceRegex) HanFind(source string) []string {
 	return words
 }
 
-
-
 func (j *SourceRegex) HanCreateRegexs() map[string]*RegexPool {
 	j.Regexs = make(map[string]*RegexPool)
 	for han, _ := range j.words {
@@ -57,19 +45,10 @@ func (j *SourceRegex) HanCreateRegexs() map[string]*RegexPool {
 			}
 			j.Regexs[string(han)] = &RegexPool{Regexp: k, count: 0}
 		} else {
-			panic("Error establishing something")
+			panic("Error creating regex")
 		}
 	}
 	return j.Regexs
-}
-
-func (j *SourceRegex) HanReplace(source string, replacement string) {
-	r := j.ReplaceAll([]byte(source), []byte(replacement))
-	fmt.Println(r)
-	q := j.Find([]byte(">话题</a><"))
-	q = j.ReplaceAll([]byte(">话题</a><"), []byte("go"))
-	fmt.Println(string(q))
-	fmt.Println(regexp.MatchString("\\p{Han}+", ">话题</a><"))
 }
 
 func NewHanRegex() *SourceRegex {

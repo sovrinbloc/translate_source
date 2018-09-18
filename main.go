@@ -1,32 +1,36 @@
 package main
 
 import (
+	"fmt"
+	"log"
+	"strings"
 	"time"
 	"translate_source/config"
 	"translate_source/directory"
 	"translate_source/language"
-	"strings"
-	"log"
-	"fmt"
+	"translate_source/persist"
 )
 
 func init() {
-	language.InitRedis()
+	persist.InitRedis()
 	log.Println("starting .env configuration")
 	config.EnvInit()
 	log.Println("successfully imported .env file")
+	persist.InitRoach()
+	persist.InitRedis()
+	persist.CacheTranslations()
 }
 
 func main() {
-	//return
-	directory.Copy(config.Env.Vars["DIRECTORY"], config.Env.Vars["NEW_DIRECTORY"])
-	d := directory.NewFileStructure(config.Env.Vars["DIR_BASE"])
+	return
+	directory.Copy(config.Env.Vars[config.DIRECTORY], config.Env.Vars[config.NEW_DIR])
+	d := directory.NewFileStructure(config.Env.Vars[config.DIR_BASE])
 	d.ClipBasePath()
-	d.CreateFolderStructure(config.Env.Vars["NEW_DIR"])
+	d.CreateFolderStructure(config.Env.Vars[config.NEW_DIR])
 	translator := TranslateSourceByJoin()
 	//translator := TranslateSource()
 	d.AddFiles(translator.SourceFiles.Files)
-	d.SaveFiles(config.Env.Vars["NEW_DIR"])
+	d.SaveFiles(config.Env.Vars[config.NEW_DIR])
 
 	log.Println("completed writing")
 	for key, _ := range translator.SourceFiles.Files {
@@ -38,16 +42,17 @@ func main() {
 func TranslateSource() *language.TranslateSource {
 	translator := language.NewTranslate()
 	totalSource, regexPool := translator.GetForeignStrings()
-	for location, stringSlice := range totalSource {
+	for location, chineseStrings := range totalSource {
 		log.Println("translating location:", location)
-		for index, words := range stringSlice {
-			totalSource[location][index] = translator.TranslateString(words)
-			translator.SourceFiles.Files[location] = string(regexPool[words].ReplaceAll(
+		for index, hanWords := range chineseStrings {
+			totalSource[location][index] = translator.TranslateString(hanWords)
+			translator.SourceFiles.Files[location] = string(regexPool[hanWords].ReplaceAll(
 				[]byte(translator.SourceFiles.Files[location]),
 				[]byte(totalSource[location][index])))
+			persist.TempDictionary[hanWords] = &totalSource[location][index]
 			time.Sleep(time.Second / 100)
 		}
-		log.Println("finished translating", len(stringSlice), "words")
+		log.Println("finished translating", len(chineseStrings), "hanWords")
 	}
 	return translator
 }
@@ -80,15 +85,20 @@ func TranslateSourceByJoin() *language.TranslateSource {
 				translator.SourceFiles.Files[location] = string(regexPool[value].ReplaceAll(
 					[]byte(translator.SourceFiles.Files[location]),
 					[]byte(totalSource[location][key])))
+				if _, ok := persist.FullDictionary[value]; !ok {
+					persist.TempDictionary[value] = &totalSource[location][key]
+					persist.FullDictionary[value] = struct{}{}
+				}
 			}
 			log.Printf("finished translating %v chinese words\n", len(chineseSlice))
+			persist.SaveToDictionary()
+			log.Println("persisted to dictionary")
 		}
 	}
 	log.Printf("translated %v characters in %v words\n", charCount, wordCount)
+
 	elapsed := time.Since(start)
 	log.Printf("translation took %s at %f words/second\n", elapsed, float64(wordCount)/elapsed.Seconds())
 	log.Println("finished translating successfully")
 	return translator
 }
-
-
